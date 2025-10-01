@@ -1,0 +1,35 @@
+name: Build and Deploy to ACI
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Log in to Azure
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+    - name: Build and push image to ACR
+      run: |
+        az acr build \
+          --registry uniqueregistery7658 \
+          --image azure-practice:latest \
+          .
+
+    - name: Deploy to Azure Container Instance
+      run: |
+        az container create \
+          --resource-group practiceGroup \
+          --name my-app-aci \
+          --image myUniqueACRName.azurecr.io/my-app:latest \
+          --cpu 1 --memory 1 \
+          --dns-name-label my-app-dns-$(date +%s) \
+          --ports 80
